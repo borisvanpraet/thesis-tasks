@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thesis tasks</title>
+<style>
+  :root {
+    --bg: #faf9f6;
+    --surface: #ffffff;
+    --border: #e4e1d8;
+    --border-strong: #d2cebf;
+    --text: #2c2c2a;
+    --text-secondary: #6b6a63;
+    --text-tertiary: #9a988e;
+    --accent: #3c3489;
+    --accent-bg: #eeedfe;
+    --success: #0f6e56;
+    --success-bg: #e1f5ee;
+    --danger: #993c1d;
+    --danger-bg: #faece7;
+    --writing: #3c3489;
+    --writing-bg: #eeedfe;
+    --modelling: #0f6e56;
+    --modelling-bg: #e1f5ee;
+    --researching: #993c1d;
+    --researching-bg: #faece7;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a;
+      --surface: #262624;
+      --border: #3a3a36;
+      --border-strong: #4a4a45;
+      --text: #f0efe9;
+      --text-secondary: #b4b2a9;
+      --text-tertiary: #888780;
+      --accent: #cecbf6;
+      --accent-bg: #3c3489;
+      --success: #9fe1cb;
+      --success-bg: #085041;
+      --danger: #f5c4b3;
+      --danger-bg: #712b13;
+      --writing: #cecbf6;
+      --writing-bg: #3c3489;
+      --modelling: #9fe1cb;
+      --modelling-bg: #085041;
+      --researching: #f5c4b3;
+      --researching-bg: #712b13;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .app {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+    min-height: 100vh;
+  }
+  button {
+    font-family: inherit;
+    cursor: pointer;
+  }
+  input, textarea, select {
+    font-family: inherit;
+    font-size: 14px;
+  }
+
+  /* ---- top nav ---- */
+  .topnav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+  .topnav .views {
+    display: flex;
+    gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 3px;
+  }
+  .topnav button.viewbtn {
+    border: none;
+    background: transparent;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .topnav button.viewbtn.active {
+    background: var(--text);
+    color: var(--bg);
+  }
+  .topnav .menubtn {
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    font-size: 13px;
+    padding: 6px 10px;
+  }
+  .topnav .menubtn:hover { color: var(--text-secondary); }
+
+  /* ---- daily view ---- */
+  .daily-header {
+    margin-bottom: 24px;
+  }
+  .daily-date {
+    font-size: 13px;
+    color: var(--text-tertiary);
+  }
+  .task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .task-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .task-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .task-text {
+    flex: 1;
+    font-size: 15px;
+    min-width: 0;
+  }
+  .parent-tag {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-left: 6px;
+    font-weight: normal;
+  }
+  .parent-tag::before { content: '· '; }
+  .task-tag {
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-strong);
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .task-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .task-actions button {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: var(--text-secondary);
+  }
+  .task-actions button.yes:hover { background: var(--success-bg); color: var(--success); border-color: var(--success); }
+  .task-actions button.no:hover { background: var(--danger-bg); color: var(--danger); border-color: var(--danger); }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-tertiary);
+  }
+  .empty-state .big {
+    font-size: 15px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+
+  .swap-link {
+    margin-top: 24px;
+    text-align: center;
+  }
+  .swap-link button {
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    font-size: 12px;
+    text-decoration: underline;
+  }
+
+  /* ---- planning view ---- */
+  .planning-section {
+    margin-bottom: 28px;
+  }
+  .planning-section.dragging-cat { opacity: 0.4; }
+  .cat-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    cursor: grab;
+  }
+  .cat-header .drag-handle {
+    color: var(--text-tertiary);
+    font-size: 13px;
+    opacity: 0;
+    transition: opacity 0.1s;
+  }
+  .cat-header:hover .drag-handle { opacity: 1; }
+  .cat-dot { width: 9px; height: 9px; border-radius: 50%; }
+  .cat-title { font-size: 14px; font-weight: 500; }
+  .cat-count { font-size: 12px; color: var(--text-tertiary); }
+
+  .backlog-item {
+    padding: 6px 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .backlog-item.dragging { opacity: 0.4; }
+  .backlog-item .drag-handle {
+    cursor: grab;
+    color: var(--text-tertiary);
+    font-size: 13px;
+    flex-shrink: 0;
+    width: 14px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.1s;
+  }
+  .backlog-item:hover .drag-handle { opacity: 1; }
+  .backlog-item .bullet {
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+  }
+  .backlog-item .txt { flex: 1; font-size: 14px; min-width: 0; cursor: text; }
+  .edit-input {
+    flex: 1;
+    font-size: 14px;
+    border: none;
+    border-bottom: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--text);
+    padding: 0 0 1px 0;
+    outline: none;
+    min-width: 0;
+    font-family: inherit;
+  }
+  .backlog-item.in-today {
+    background: var(--accent-bg);
+    margin: 0 -8px;
+    padding: 6px 10px;
+    border-radius: var(--radius);
+    border-bottom: 1px solid transparent;
+  }
+  .backlog-item.in-today .txt { color: var(--accent); }
+  .backlog-item .age-tag {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .backlog-item .quicktoggle {
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--text-tertiary);
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .backlog-item .quicktoggle.active {
+    background: var(--success-bg);
+    color: var(--success);
+    border-color: transparent;
+  }
+  .backlog-item .todaytoggle {
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .backlog-item .todaytoggle.active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: transparent;
+  }
+  .backlog-item .delbtn {
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    font-size: 13px;
+    padding: 2px 4px;
+    flex-shrink: 0;
+  }
+  .backlog-item .delbtn:hover { color: var(--danger); }
+  .deadline-add-btn {
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    font-size: 11px;
+    padding: 2px 6px;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.1s;
+    white-space: nowrap;
+  }
+  .backlog-item:hover .deadline-add-btn { opacity: 1; }
+  .deadline-add-btn:hover { color: var(--accent); }
+  .deadline-tag {
+    font-size: 11px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    white-space: nowrap;
+    cursor: pointer;
+    padding: 2px 5px;
+    border-radius: 6px;
+  }
+  .deadline-tag:hover { background: var(--border); }
+  .deadline-tag.synced { color: var(--success); }
+  .calbtn {
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    font-size: 12px;
+    padding: 2px 4px;
+    flex-shrink: 0;
+  }
+  .calbtn:hover { color: var(--accent); }
+  .calbtn.synced { color: var(--success); font-size: 11px; }
+  .deadline-input {
+    border: 1px solid var(--border-strong);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 11px;
+    padding: 2px 4px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    font-family: inherit;
+  }
+
+  .new-item-row {
+    padding: 6px 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 26px;
+  }
+  .new-item-row .bullet {
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.1s;
+  }
+  .new-item-row:hover .bullet,
+  .new-item-row.has-focus .bullet { opacity: 1; }
+  .new-item-row input[type="text"] {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    padding: 2px 0;
+    outline: none;
+  }
+  .new-item-row input[type="text"]::placeholder { color: transparent; }
+  .new-item-row:hover input[type="text"]::placeholder,
+  .new-item-row input[type="text"]:focus::placeholder { color: var(--text-tertiary); }
+  .new-item-row .addparentbtn {
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    font-size: 11px;
+    padding: 2px 6px;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.1s;
+  }
+  .new-item-row:hover .addparentbtn,
+  .new-item-row.has-focus .addparentbtn { opacity: 1; }
+  .new-item-row .addparentbtn:hover { color: var(--accent); }
+
+  .parent-group { margin-bottom: 2px; }
+  .parent-row { border-bottom: none; }
+  .parent-row .txt.parent-txt {
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+  .sub-item {
+    padding-left: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sub-item:last-of-type { border-bottom: 1px solid var(--border); }
+  .sub-bullet {
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+    font-size: 11px;
+  }
+  .sub-txt { font-size: 13px; }
+  .sub-new-row {
+    padding-left: 20px;
+  }
+  .sub-new-row .sub-bullet {
+    opacity: 0;
+    transition: opacity 0.1s;
+  }
+  .sub-new-row:hover .sub-bullet,
+  .sub-new-row.has-focus .sub-bullet { opacity: 1; }
+  .sub-new-row input[type="text"] {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-size: 13px;
+    padding: 2px 0;
+    outline: none;
+  }
+  .sub-new-row input[type="text"]::placeholder { color: transparent; }
+  .sub-new-row:hover input[type="text"]::placeholder,
+  .sub-new-row input[type="text"]:focus::placeholder { color: var(--text-tertiary); }
+
+  .suggest-wrap {
+    margin-bottom: 28px;
+  }
+  .suggest-label {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-bottom: 6px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .suggest-label:hover { color: var(--text-secondary); }
+  .suggest-caret {
+    display: inline-block;
+    width: 10px;
+    font-size: 10px;
+  }
+  .suggest-list {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 4px 12px;
+  }
+  .suggest-item {
+    padding: 7px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .suggest-item:last-child { border-bottom: none; }
+  .suggest-item .txt { flex: 1; font-size: 14px; min-width: 0; color: var(--text-secondary); }
+  .suggest-item .quicktoggle {
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .suggest-item .quicktoggle.active {
+    background: var(--success-bg);
+    color: var(--success);
+    border-color: transparent;
+  }
+  .suggest-item .todaytoggle {
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 13px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    flex-shrink: 0;
+  }
+  .suggest-item .todaytoggle:hover {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: transparent;
+  }
+
+  .hidden-log-link {
+    text-align: center;
+    margin-top: 40px;
+  }
+  .hidden-log-link button {
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    font-size: 11px;
+  }
+
+  .backup-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 28px;
+    justify-content: center;
+  }
+  .backup-row button {
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text-secondary);
+    padding: 6px 12px;
+    border-radius: var(--radius);
+    font-size: 12px;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+  }
+  .modal {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    max-width: 420px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  .modal h3 { margin: 0 0 12px; font-size: 15px; font-weight: 500; }
+  .modal-close {
+    display: block;
+    margin: 16px auto 0;
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    font-size: 13px;
+  }
+  .log-item {
+    font-size: 13px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .log-item .d { color: var(--text-tertiary); white-space: nowrap; font-size: 11px; }
+</style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script>
+(function(){
+  var GOOGLE_CLIENT_ID = '817431423714-60o9rursb72aouopf6glk843muno23ae.apps.googleusercontent.com';
+  var CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
+  var tokenClient = null;
+  var accessToken = null;
+  var tokenExpiresAt = 0;
+
+  var STORAGE_KEY = 'thesis-tasks-v1';
+  var CATEGORIES = [
+    { id: 'writing', label: 'Writing', color: 'var(--writing)', bg: 'var(--writing-bg)' },
+    { id: 'modelling', label: 'Modelling', color: 'var(--modelling)', bg: 'var(--modelling-bg)' },
+    { id: 'researching', label: 'Researching', color: 'var(--researching)', bg: 'var(--researching-bg)' }
+  ];
+
+  var state = {
+    view: 'daily',
+    backlog: [],
+    doneLog: [],
+    categoryOrder: ['writing', 'modelling', 'researching'],
+    lastGenDate: null,
+    suggestExpanded: false
+  };
+
+  function uid(){ return 'id-' + Date.now() + '-' + Math.random().toString(36).slice(2,8); }
+  function todayStr(){ return new Date().toISOString().slice(0,10); }
+  function daysSince(dateStr){
+    if (!dateStr) return 0;
+    var a = new Date(dateStr + 'T00:00:00');
+    var b = new Date(todayStr() + 'T00:00:00');
+    return Math.round((b - a) / 86400000);
+  }
+  function fmtDate(d){
+    return new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric', weekday: 'long' });
+  }
+  function catInfo(id){ return CATEGORIES.find(c => c.id === id) || CATEGORIES[0]; }
+
+  function deadlineControlHtml(task){
+    if (task.deadline) {
+      var synced = !!task.calendarEventId;
+      return '<span class="deadline-tag' + (synced ? ' synced' : '') + '" data-deadline-edit="' + task.id + '" title="Click to change">' +
+        fmtShortDate(task.deadline) +
+        '</span>' +
+        (synced
+          ? '<button class="calbtn synced" data-cal-remove="' + task.id + '" title="Remove from Google Calendar">&#10003;</button>'
+          : '<button class="calbtn" data-cal-add="' + task.id + '" title="Add to Google Calendar">&#128197;</button>');
+    }
+    return '<button class="deadline-add-btn" data-deadline-edit="' + task.id + '" title="Set a deadline">+date</button>';
+  }
+
+  function fmtShortDate(dateStr){
+    var d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }
+
+  function load(){
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        state.backlog = parsed.backlog || [];
+        // migrate from old today/backlog split if present
+        if (parsed.today && parsed.today.length) {
+          parsed.today.forEach(function(t){
+            t.inToday = true;
+            if (!t.createdDate) t.createdDate = todayStr();
+            state.backlog.push(t);
+          });
+        }
+        state.backlog.forEach(function(b){
+          if (!b.createdDate && !b.isParent) b.createdDate = todayStr();
+          if (typeof b.inToday !== 'boolean') b.inToday = false;
+          if (typeof b.isParent !== 'boolean') b.isParent = false;
+          if (typeof b.parentId === 'undefined') b.parentId = null;
+          if (typeof b.deadline === 'undefined') b.deadline = null;
+          if (typeof b.calendarEventId === 'undefined') b.calendarEventId = null;
+        });
+        state.doneLog = parsed.doneLog || [];
+        state.lastGenDate = parsed.lastGenDate || null;
+        state.categoryOrder = parsed.categoryOrder || state.categoryOrder;
+      }
+    } catch(e) { console.error('load failed', e); }
+  }
+
+  function save(){
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        backlog: state.backlog,
+        doneLog: state.doneLog,
+        lastGenDate: state.lastGenDate,
+        categoryOrder: state.categoryOrder
+      }));
+    } catch(e) { console.error('save failed', e); }
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  // ---- auto-suggest for today ----
+  function autoSuggest(n){
+    n = n || 3;
+    var pool = state.backlog.filter(function(b){ return !b.inToday && !b.isParent; });
+    // prioritize tasks that have been sitting longest
+    pool.sort(function(a,b){
+      return daysSince(b.createdDate) - daysSince(a.createdDate);
+    });
+    var picked = [];
+    var quick = pool.filter(function(t){ return t.quick; });
+    var focus = pool.filter(function(t){ return !t.quick; });
+    if (quick.length) picked.push(quick[0]);
+    var i = 0;
+    while (picked.length < n && i < focus.length) {
+      if (picked.indexOf(focus[i]) === -1) picked.push(focus[i]);
+      i++;
+    }
+    i = 1;
+    while (picked.length < n && i < quick.length) {
+      if (picked.indexOf(quick[i]) === -1) picked.push(quick[i]);
+      i++;
+    }
+    return picked.slice(0, n);
+  }
+
+  function ensureTodayPopulated(){
+    var t = todayStr();
+    if (state.lastGenDate !== t) {
+      var inTodayCount = state.backlog.filter(function(b){ return b.inToday; }).length;
+      if (inTodayCount === 0) {
+        var suggestions = autoSuggest(3);
+        suggestions.forEach(function(item){ item.inToday = true; });
+        save();
+      }
+      state.lastGenDate = t;
+    }
+  }
+
+  // ---- Google Calendar auth ----
+  function initGoogleAuth(){
+    if (!window.google || !window.google.accounts) {
+      // GIS script not loaded yet, retry shortly
+      setTimeout(initGoogleAuth, 300);
+      return;
+    }
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: CALENDAR_SCOPE,
+      callback: function(resp){
+        if (resp && resp.access_token) {
+          accessToken = resp.access_token;
+          tokenExpiresAt = Date.now() + (resp.expires_in ? resp.expires_in * 1000 : 3500 * 1000);
+          render();
+        }
+      }
+    });
+  }
+
+  function isSignedIn(){
+    return !!accessToken && Date.now() < tokenExpiresAt;
+  }
+
+  function signIn(){
+    if (!tokenClient) { initGoogleAuth(); setTimeout(signIn, 400); return; }
+    tokenClient.requestAccessToken({ prompt: isSignedIn() ? '' : 'consent' });
+  }
+
+  function signOut(){
+    if (accessToken && window.google) {
+      google.accounts.oauth2.revoke(accessToken, function(){});
+    }
+    accessToken = null;
+    tokenExpiresAt = 0;
+    render();
+  }
+
+  function ensureToken(callback){
+    if (isSignedIn()) { callback(); return; }
+    if (!tokenClient) { initGoogleAuth(); }
+    tokenClient.callback = function(resp){
+      if (resp && resp.access_token) {
+        accessToken = resp.access_token;
+        tokenExpiresAt = Date.now() + (resp.expires_in ? resp.expires_in * 1000 : 3500 * 1000);
+        callback();
+      }
+    };
+    tokenClient.requestAccessToken({ prompt: '' });
+  }
+
+  function addEventToCalendar(task){
+    if (!task.deadline) return;
+    ensureToken(function(){
+      var event = {
+        summary: task.text,
+        description: 'Added from thesis-tasks',
+        start: { date: task.deadline },
+        end: { date: task.deadline }
+      };
+      fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + accessToken,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(event)
+      })
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        if (data.id) {
+          task.calendarEventId = data.id;
+          save();
+          render();
+        } else {
+          console.error('Calendar insert failed', data);
+          alert('Could not add to calendar. Try signing in again.');
+        }
+      })
+      .catch(function(err){
+        console.error('Calendar request failed', err);
+        alert('Could not reach Google Calendar.');
+      });
+    });
+  }
+
+  function removeEventFromCalendar(task){
+    if (!task.calendarEventId) return;
+    ensureToken(function(){
+      fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events/' + task.calendarEventId, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + accessToken }
+      })
+      .then(function(){
+        task.calendarEventId = null;
+        save();
+        render();
+      })
+      .catch(function(err){ console.error('Calendar delete failed', err); });
+    });
+  }
+
+  function setDeadline(id, dateStr){
+    var item = state.backlog.find(function(b){ return b.id === id; });
+    if (!item) return;
+    item.deadline = dateStr || null;
+    save();
+    render();
+  }
+
+  // ---- actions ----
+  function editTaskText(id, newText){
+    var item = state.backlog.find(function(b){ return b.id === id; });
+    if (!item) return;
+    var trimmed = newText.trim();
+    if (!trimmed) { render(); return; }
+    item.text = trimmed;
+    save();
+    render();
+  }
+
+  function markDone(taskId){
+    var idx = state.backlog.findIndex(function(b){ return b.id === taskId; });
+    if (idx === -1) return;
+    var task = state.backlog[idx];
+    state.backlog.splice(idx, 1);
+    state.doneLog.push({ id: task.id, text: task.text, category: task.category, quick: task.quick, date: todayStr() });
+    save();
+    render();
+  }
+
+  function markNotDone(taskId){
+    var task = state.backlog.find(function(b){ return b.id === taskId; });
+    if (!task) return;
+    task.inToday = false;
+    save();
+    render();
+  }
+
+  function toggleInToday(id){
+    var task = state.backlog.find(function(b){ return b.id === id; });
+    if (!task) return;
+    task.inToday = !task.inToday;
+    save();
+    render();
+  }
+
+  function addBacklogItem(text, category, quick){
+    if (!text || !text.trim()) return;
+    state.backlog.push({ id: uid(), text: text.trim(), category: category, quick: !!quick, inToday: false, createdDate: todayStr(), isParent: false, parentId: null, deadline: null, calendarEventId: null });
+    save();
+    render();
+    var input = document.querySelector('input[data-newinput="' + category + '"]');
+    if (input) input.focus();
+  }
+
+  function addParent(text, category){
+    if (!text || !text.trim()) return;
+    state.backlog.push({ id: uid(), text: text.trim(), category: category, isParent: true, parentId: null });
+    save();
+    render();
+    var input = document.querySelector('input[data-newinput="' + category + '"]');
+    if (input) input.focus();
+  }
+
+  function addSubtask(parentId, text){
+    if (!text || !text.trim()) return;
+    var parent = state.backlog.find(function(b){ return b.id === parentId; });
+    if (!parent) return;
+    state.backlog.push({ id: uid(), text: text.trim(), category: parent.category, quick: false, inToday: false, createdDate: todayStr(), isParent: false, parentId: parentId, deadline: null, calendarEventId: null });
+    save();
+    render();
+    var input = document.querySelector('input[data-subinput="' + parentId + '"]');
+    if (input) input.focus();
+  }
+
+  function deleteBacklogItem(id){
+    state.backlog = state.backlog.filter(function(b){ return b.id !== id && b.parentId !== id; });
+    save();
+    render();
+  }
+
+  function toggleQuick(id){
+    var item = state.backlog.find(function(b){ return b.id === id; });
+    if (!item) return;
+    item.quick = !item.quick;
+    save();
+    render();
+  }
+
+  function reorderBacklogWithinCategory(catId, draggedId, targetId){
+    var dragged0 = state.backlog.find(function(b){ return b.id === draggedId; });
+    if (dragged0 && dragged0.parentId) return; // subtasks aren't reorderable via this drag path
+    var catItems = state.backlog.filter(function(b){ return b.category === catId && !b.parentId; });
+    var others = state.backlog.filter(function(b){ return b.category !== catId || b.parentId; });
+    var draggedIdx = catItems.findIndex(function(b){ return b.id === draggedId; });
+    if (draggedIdx === -1) return;
+    var dragged = catItems.splice(draggedIdx, 1)[0];
+    var targetIdx = catItems.findIndex(function(b){ return b.id === targetId; });
+    if (targetIdx === -1) catItems.push(dragged);
+    else catItems.splice(targetIdx, 0, dragged);
+    // rebuild backlog preserving category grouping order, keeping each parent's subtasks immediately after it
+    var rebuilt = [];
+    state.categoryOrder.forEach(function(cid){
+      var ordered = cid === catId ? catItems : others.filter(function(b){ return b.category === cid && !b.parentId; });
+      ordered.forEach(function(item){
+        rebuilt.push(item);
+        if (item.isParent) {
+          others.filter(function(b){ return b.parentId === item.id; }).forEach(function(sub){ rebuilt.push(sub); });
+        }
+      });
+    });
+    state.backlog = rebuilt;
+    save();
+    render();
+  }
+
+  function reorderCategories(draggedId, targetId){
+    var order = state.categoryOrder.slice();
+    var draggedIdx = order.indexOf(draggedId);
+    if (draggedIdx === -1) return;
+    order.splice(draggedIdx, 1);
+    var targetIdx = order.indexOf(targetId);
+    if (targetIdx === -1) order.push(draggedId);
+    else order.splice(targetIdx, 0, draggedId);
+    state.categoryOrder = order;
+    save();
+    render();
+  }
+
+  function exportData(){
+    var blob = new Blob([JSON.stringify({
+      backlog: state.backlog, doneLog: state.doneLog,
+      lastGenDate: state.lastGenDate, categoryOrder: state.categoryOrder
+    }, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'thesis-tasks-backup-' + todayStr() + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function importData(file){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      try {
+        var parsed = JSON.parse(e.target.result);
+        state.backlog = parsed.backlog || [];
+        state.doneLog = parsed.doneLog || [];
+        state.lastGenDate = parsed.lastGenDate || null;
+        state.categoryOrder = parsed.categoryOrder || state.categoryOrder;
+        save();
+        render();
+      } catch(err) {
+        alert('Could not read that file.');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // ---- rendering ----
+  function render(){
+    ensureTodayPopulated();
+    var app = document.getElementById('app');
+    app.innerHTML = '';
+
+    var nav = document.createElement('div');
+    nav.className = 'topnav';
+    nav.innerHTML =
+      '<div class="views">' +
+        '<button class="viewbtn' + (state.view==='daily' ? ' active' : '') + '" data-view="daily">Today</button>' +
+        '<button class="viewbtn' + (state.view==='planning' ? ' active' : '') + '" data-view="planning">Planning</button>' +
+      '</div>' +
+      '<div style="display:flex; align-items:center; gap:4px;">' +
+        (state.view === 'planning'
+          ? (isSignedIn()
+              ? '<button class="menubtn" id="calAuthBtn" title="Signed in to Google Calendar">cal &#10003;</button>'
+              : '<button class="menubtn" id="calAuthBtn">connect calendar</button>')
+          : '') +
+        '<button class="menubtn" id="logBtn">log</button>' +
+      '</div>';
+    app.appendChild(nav);
+
+    if (state.view === 'daily') renderDaily(app);
+    else renderPlanning(app);
+
+    nav.querySelectorAll('[data-view]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        state.view = btn.getAttribute('data-view');
+        render();
+      });
+    });
+    document.getElementById('logBtn').addEventListener('click', openLogModal);
+    var calBtn = document.getElementById('calAuthBtn');
+    if (calBtn) {
+      calBtn.addEventListener('click', function(){
+        if (isSignedIn()) signOut();
+        else signIn();
+      });
+    }
+  }
+
+  function renderDaily(app){
+    var header = document.createElement('div');
+    header.className = 'daily-header';
+    header.innerHTML = '<div class="daily-date">' + fmtDate(new Date()) + '</div>';
+    app.appendChild(header);
+
+    var todayTasks = state.backlog.filter(function(b){ return b.inToday; });
+    todayTasks.sort(function(a,b){
+      var aq = a.quick ? 0 : 1;
+      var bq = b.quick ? 0 : 1;
+      return aq - bq;
+    });
+
+    var list = document.createElement('div');
+    list.className = 'task-list';
+
+    if (todayTasks.length === 0) {
+      var empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.innerHTML =
+        '<div class="big">Nothing queued for today.</div>' +
+        '<div>Go to planning to pull something in.</div>';
+      app.appendChild(empty);
+    } else {
+      todayTasks.forEach(function(task){
+        var cat = catInfo(task.category);
+        var card = document.createElement('div');
+        card.className = 'task-card';
+        var parentTag = '';
+        if (task.parentId) {
+          var parent = state.backlog.find(function(b){ return b.id === task.parentId; });
+          if (parent) parentTag = '<span class="parent-tag">' + escapeHtml(parent.text) + '</span>';
+        }
+        card.innerHTML =
+          '<span class="task-dot" style="background:' + cat.color + '"></span>' +
+          '<span class="task-text">' + escapeHtml(task.text) + parentTag + '</span>' +
+          (task.quick ? '<span class="task-tag">&lt;5m</span>' : '') +
+          '<span class="task-actions">' +
+            '<button class="no" data-act="no" data-id="' + task.id + '" aria-label="Not done">&#10005;</button>' +
+            '<button class="yes" data-act="yes" data-id="' + task.id + '" aria-label="Done">&#10003;</button>' +
+          '</span>';
+        list.appendChild(card);
+      });
+      app.appendChild(list);
+
+      var swap = document.createElement('div');
+      swap.className = 'swap-link';
+      swap.innerHTML = '<button id="goToPlanning">swap or add tasks</button>';
+      app.appendChild(swap);
+    }
+
+    app.querySelectorAll('button[data-act]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.getAttribute('data-id');
+        if (btn.getAttribute('data-act') === 'yes') markDone(id);
+        else markNotDone(id);
+      });
+    });
+    var goP = document.getElementById('goToPlanning');
+    if (goP) goP.addEventListener('click', function(){ state.view = 'planning'; render(); });
+  }
+
+  function renderPlanning(app){
+    var todayCount = state.backlog.filter(function(b){ return b.inToday; }).length;
+    if (todayCount < 4) {
+      var suggestions = autoSuggest(5).slice(0, 5);
+      if (suggestions.length > 0) {
+        var suggestWrap = document.createElement('div');
+        suggestWrap.className = 'suggest-wrap';
+        var labelRow = document.createElement('div');
+        labelRow.className = 'suggest-label';
+        labelRow.innerHTML = '<span class="suggest-caret">' + (state.suggestExpanded ? '&#9662;' : '&#9656;') + '</span> suggested for today (' + suggestions.length + ')';
+        labelRow.addEventListener('click', function(){
+          state.suggestExpanded = !state.suggestExpanded;
+          render();
+        });
+        suggestWrap.appendChild(labelRow);
+
+        if (state.suggestExpanded) {
+          var suggestList = document.createElement('div');
+          suggestList.className = 'suggest-list';
+          suggestions.forEach(function(s){
+            var cat = catInfo(s.category);
+            var row = document.createElement('div');
+            row.className = 'suggest-item';
+            row.innerHTML =
+              '<span class="bullet" style="color:' + cat.color + '">&#8226;</span>' +
+              '<span class="txt">' + escapeHtml(s.text) + '</span>' +
+              (s.quick ? '<span class="quicktoggle active" style="pointer-events:none;">&lt;5m</span>' : '') +
+              '<button class="todaytoggle" data-today="' + s.id + '" aria-label="Add to today">&#10148;</button>';
+            suggestList.appendChild(row);
+          });
+          suggestWrap.appendChild(suggestList);
+        }
+        app.appendChild(suggestWrap);
+      }
+    }
+
+    state.categoryOrder.forEach(function(catId){
+      var cat = catInfo(catId);
+      var items = state.backlog.filter(function(b){ return b.category === catId; });
+      var section = document.createElement('div');
+      section.className = 'planning-section';
+      section.setAttribute('draggable', 'true');
+      section.setAttribute('data-cat-drag', catId);
+      var header = '<div class="cat-header"><span class="drag-handle">&#8942;&#8942;</span><span class="cat-dot" style="background:' + cat.color + '"></span><span class="cat-title">' + cat.label + '</span><span class="cat-count">' + items.length + '</span></div>';
+      section.innerHTML = header;
+
+      var list = document.createElement('div');
+      list.setAttribute('data-cat-list', catId);
+
+      var topLevelItems = items.filter(function(b){ return !b.parentId; });
+
+      topLevelItems.forEach(function(b){
+        if (b.isParent) {
+          var subtasks = items.filter(function(s){ return s.parentId === b.id; });
+          var parentWrap = document.createElement('div');
+          parentWrap.className = 'parent-group';
+
+          var parentRow = document.createElement('div');
+          parentRow.className = 'backlog-item parent-row';
+          parentRow.setAttribute('draggable', 'true');
+          parentRow.setAttribute('data-task-drag', b.id);
+          parentRow.setAttribute('data-task-cat', catId);
+          parentRow.innerHTML =
+            '<span class="drag-handle">&#8942;&#8942;</span>' +
+            '<span class="bullet">&#8226;</span>' +
+            '<span class="txt parent-txt" data-edit="' + b.id + '">' + escapeHtml(b.text) + '</span>' +
+            '<button class="delbtn" data-del="' + b.id + '" aria-label="Delete">&#10005;</button>';
+          parentWrap.appendChild(parentRow);
+
+          subtasks.forEach(function(sub){
+            var subRow = document.createElement('div');
+            subRow.className = 'backlog-item sub-item' + (sub.inToday ? ' in-today' : '');
+            var subAge = daysSince(sub.createdDate);
+            var subAgeTag = (!sub.inToday && subAge >= 2) ? '<span class="age-tag">&#128293;' + subAge + '</span>' : '';
+            subRow.innerHTML =
+              '<span class="sub-bullet">&#8226;</span>' +
+              '<span class="txt sub-txt" data-edit="' + sub.id + '">' + escapeHtml(sub.text) + '</span>' +
+              subAgeTag +
+              '<button class="quicktoggle' + (sub.quick ? ' active' : '') + '" data-quick="' + sub.id + '">&lt;5m</button>' +
+              deadlineControlHtml(sub) +
+              '<button class="todaytoggle' + (sub.inToday ? ' active' : '') + '" data-today="' + sub.id + '" aria-label="Toggle in today">' + (sub.inToday ? 'today' : '&#10148;') + '</button>' +
+              '<button class="delbtn" data-del="' + sub.id + '" aria-label="Delete">&#10005;</button>';
+            parentWrap.appendChild(subRow);
+          });
+
+          var newSubRow = document.createElement('div');
+          newSubRow.className = 'new-item-row sub-new-row';
+          newSubRow.innerHTML =
+            '<span class="sub-bullet">&#43;</span>' +
+            '<input type="text" placeholder="add a subtask" data-subinput="' + b.id + '" />';
+          parentWrap.appendChild(newSubRow);
+
+          list.appendChild(parentWrap);
+        } else {
+          var item = document.createElement('div');
+          item.className = 'backlog-item' + (b.inToday ? ' in-today' : '');
+          item.setAttribute('draggable', 'true');
+          item.setAttribute('data-task-drag', b.id);
+          item.setAttribute('data-task-cat', catId);
+          var age = daysSince(b.createdDate);
+          var ageTag = (!b.inToday && age >= 2) ? '<span class="age-tag">&#128293;' + age + '</span>' : '';
+          item.innerHTML =
+            '<span class="drag-handle">&#8942;&#8942;</span>' +
+            '<span class="bullet">&#8226;</span>' +
+            '<span class="txt" data-edit="' + b.id + '">' + escapeHtml(b.text) + '</span>' +
+            ageTag +
+            '<button class="quicktoggle' + (b.quick ? ' active' : '') + '" data-quick="' + b.id + '">&lt;5m</button>' +
+            deadlineControlHtml(b) +
+            '<button class="todaytoggle' + (b.inToday ? ' active' : '') + '" data-today="' + b.id + '" aria-label="Toggle in today">' + (b.inToday ? 'today' : '&#10148;') + '</button>' +
+            '<button class="delbtn" data-del="' + b.id + '" aria-label="Delete">&#10005;</button>';
+          list.appendChild(item);
+        }
+      });
+
+      var newRow = document.createElement('div');
+      newRow.className = 'new-item-row';
+      newRow.innerHTML =
+        '<span class="bullet">&#43;</span>' +
+        '<input type="text" placeholder="add a task" data-newinput="' + catId + '" />' +
+        '<button class="addparentbtn" data-addparent="' + catId + '" title="Add as a grouping label instead">group</button>';
+      list.appendChild(newRow);
+
+      section.appendChild(list);
+      app.appendChild(section);
+    });
+
+    var backupRow = document.createElement('div');
+    backupRow.className = 'backup-row';
+    backupRow.innerHTML =
+      '<button id="exportBtn">export backup</button>' +
+      '<button id="importBtn">import backup</button>' +
+      '<input type="file" id="importFile" accept=".json" style="display:none;" />';
+    app.appendChild(backupRow);
+
+    // ---- wire up actions ----
+    app.querySelectorAll('[data-today]').forEach(function(btn){
+      btn.addEventListener('click', function(){ toggleInToday(btn.getAttribute('data-today')); });
+    });
+    app.querySelectorAll('[data-del]').forEach(function(btn){
+      btn.addEventListener('click', function(){ deleteBacklogItem(btn.getAttribute('data-del')); });
+    });
+    app.querySelectorAll('[data-quick]').forEach(function(btn){
+      btn.addEventListener('click', function(){ toggleQuick(btn.getAttribute('data-quick')); });
+    });
+
+    // ---- deadline editing ----
+    app.querySelectorAll('[data-deadline-edit]').forEach(function(el){
+      el.addEventListener('click', function(){
+        var id = el.getAttribute('data-deadline-edit');
+        var task = state.backlog.find(function(b){ return b.id === id; });
+        var dateInput = document.createElement('input');
+        dateInput.type = 'date';
+        dateInput.className = 'deadline-input';
+        dateInput.value = (task && task.deadline) ? task.deadline : '';
+        el.replaceWith(dateInput);
+        dateInput.focus();
+        if (dateInput.showPicker) { try { dateInput.showPicker(); } catch(e){} }
+        var finish = function(){
+          setDeadline(id, dateInput.value);
+        };
+        dateInput.addEventListener('change', finish);
+        dateInput.addEventListener('blur', function(){
+          if (!dateInput.value) render();
+        });
+      });
+    });
+    app.querySelectorAll('[data-cal-add]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var task = state.backlog.find(function(b){ return b.id === btn.getAttribute('data-cal-add'); });
+        if (task) addEventToCalendar(task);
+      });
+    });
+    app.querySelectorAll('[data-cal-remove]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var task = state.backlog.find(function(b){ return b.id === btn.getAttribute('data-cal-remove'); });
+        if (task) removeEventFromCalendar(task);
+      });
+    });
+
+    // ---- click-to-edit task/group text ----
+    app.querySelectorAll('[data-edit]').forEach(function(span){
+      span.addEventListener('click', function(){
+        var id = span.getAttribute('data-edit');
+        var currentText = span.textContent;
+        var inputEl = document.createElement('input');
+        inputEl.type = 'text';
+        inputEl.value = currentText;
+        inputEl.className = 'edit-input';
+        span.replaceWith(inputEl);
+        inputEl.focus();
+        inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length);
+        var finish = function(){
+          editTaskText(id, inputEl.value);
+        };
+        inputEl.addEventListener('keydown', function(e){
+          if (e.key === 'Enter') { e.preventDefault(); finish(); }
+          if (e.key === 'Escape') { render(); }
+        });
+        inputEl.addEventListener('blur', finish);
+      });
+    });
+
+    // ---- inline add-on-enter ----
+    app.querySelectorAll('input[data-newinput]').forEach(function(input){
+      input.addEventListener('focus', function(){
+        input.closest('.new-item-row').classList.add('has-focus');
+      });
+      input.addEventListener('blur', function(){
+        input.closest('.new-item-row').classList.remove('has-focus');
+      });
+      input.addEventListener('keydown', function(e){
+        if (e.key === 'Enter') {
+          var catId = input.getAttribute('data-newinput');
+          var text = input.value;
+          if (text && text.trim()) {
+            addBacklogItem(text, catId, false);
+          }
+        }
+      });
+    });
+
+    app.querySelectorAll('input[data-subinput]').forEach(function(input){
+      input.addEventListener('focus', function(){
+        input.closest('.new-item-row').classList.add('has-focus');
+      });
+      input.addEventListener('blur', function(){
+        input.closest('.new-item-row').classList.remove('has-focus');
+      });
+      input.addEventListener('keydown', function(e){
+        if (e.key === 'Enter') {
+          var parentId = input.getAttribute('data-subinput');
+          var text = input.value;
+          if (text && text.trim()) {
+            addSubtask(parentId, text);
+          }
+        }
+      });
+    });
+
+    app.querySelectorAll('[data-addparent]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var catId = btn.getAttribute('data-addparent');
+        var input = document.querySelector('input[data-newinput="' + catId + '"]');
+        var text = input ? input.value : '';
+        if (text && text.trim()) {
+          addParent(text, catId);
+        }
+      });
+    });
+
+    // ---- drag and drop: tasks within a category ----
+    var draggedTaskId = null;
+    var draggedTaskCat = null;
+    app.querySelectorAll('[data-task-drag]').forEach(function(el){
+      el.addEventListener('dragstart', function(e){
+        draggedTaskId = el.getAttribute('data-task-drag');
+        draggedTaskCat = el.getAttribute('data-task-cat');
+        el.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      el.addEventListener('dragend', function(){
+        el.classList.remove('dragging');
+        draggedTaskId = null;
+        draggedTaskCat = null;
+      });
+      el.addEventListener('dragover', function(e){
+        e.preventDefault();
+      });
+      el.addEventListener('drop', function(e){
+        e.preventDefault();
+        var targetId = el.getAttribute('data-task-drag');
+        var targetCat = el.getAttribute('data-task-cat');
+        if (draggedTaskId && targetCat === draggedTaskCat && draggedTaskId !== targetId) {
+          reorderBacklogWithinCategory(draggedTaskCat, draggedTaskId, targetId);
+        }
+      });
+    });
+
+    // ---- drag and drop: category sections ----
+    var draggedCatId = null;
+    app.querySelectorAll('[data-cat-drag]').forEach(function(el){
+      el.addEventListener('dragstart', function(e){
+        draggedCatId = el.getAttribute('data-cat-drag');
+        el.classList.add('dragging-cat');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      el.addEventListener('dragend', function(){
+        el.classList.remove('dragging-cat');
+        draggedCatId = null;
+      });
+      el.addEventListener('dragover', function(e){
+        e.preventDefault();
+      });
+      el.addEventListener('drop', function(e){
+        e.preventDefault();
+        var targetId = el.getAttribute('data-cat-drag');
+        if (draggedCatId && draggedCatId !== targetId) {
+          reorderCategories(draggedCatId, targetId);
+        }
+      });
+    });
+
+    document.getElementById('exportBtn').addEventListener('click', exportData);
+    document.getElementById('importBtn').addEventListener('click', function(){
+      document.getElementById('importFile').click();
+    });
+    document.getElementById('importFile').addEventListener('change', function(e){
+      if (e.target.files && e.target.files[0]) importData(e.target.files[0]);
+    });
+  }
+
+  function openLogModal(){
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    var modal = document.createElement('div');
+    modal.className = 'modal';
+    var sorted = state.doneLog.slice().sort(function(a,b){ return b.date.localeCompare(a.date); });
+    modal.innerHTML = '<h3>Completed</h3>' +
+      (sorted.length === 0
+        ? '<div style="color:var(--text-tertiary); font-size:13px;">Nothing logged yet.</div>'
+        : sorted.map(function(t){
+            var cat = catInfo(t.category);
+            return '<div class="log-item"><span><span class="task-dot" style="background:' + cat.color + '; display:inline-block; margin-right:6px;"></span>' + escapeHtml(t.text) + '</span><span class="d">' + t.date + '</span></div>';
+          }).join('')) +
+      '<button class="modal-close" id="closeLog">close</button>';
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    document.getElementById('closeLog').addEventListener('click', function(){
+      document.body.removeChild(overlay);
+    });
+    overlay.addEventListener('click', function(e){
+      if (e.target === overlay) document.body.removeChild(overlay);
+    });
+  }
+
+  load();
+  render();
+  initGoogleAuth();
+})();
+</script>
+</body>
+</html>
