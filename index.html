@@ -561,6 +561,83 @@
     gap: 12px;
   }
   .log-item .d { color: var(--text-tertiary); white-space: nowrap; font-size: 11px; }
+
+  /* ---- notes view ---- */
+  .notes-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 16px;
+  }
+  .note-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 9px 2px;
+    border-bottom: 1px solid var(--border);
+  }
+  .note-check {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    flex-shrink: 0;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--success);
+    padding: 0;
+  }
+  .note-item.asked .note-check {
+    background: var(--success-bg);
+    border-color: transparent;
+  }
+  .note-body { flex: 1; min-width: 0; }
+  .note-q {
+    font-size: 14px;
+    cursor: text;
+  }
+  .note-item.asked .note-q {
+    text-decoration: line-through;
+    color: var(--text-tertiary);
+  }
+  .note-detail {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+    cursor: text;
+  }
+  .note-detail-add {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+    cursor: text;
+    opacity: 0;
+    transition: opacity 0.1s;
+  }
+  .note-item:hover .note-detail-add { opacity: 1; }
+  .note-detail-input {
+    font-size: 12px;
+    margin-top: 2px;
+    width: 100%;
+  }
+  .note-new-row { padding: 6px 2px; }
+  .archive-meeting { margin-bottom: 16px; }
+  .archive-date {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -590,7 +667,9 @@
     doneLog: [],
     categoryOrder: ['writing', 'modelling', 'researching'],
     lastGenDate: null,
-    suggestExpanded: false
+    suggestExpanded: false,
+    notes: [],
+    notesArchive: []
   };
 
   function uid(){ return 'id-' + Date.now() + '-' + Math.random().toString(36).slice(2,8); }
@@ -649,6 +728,8 @@
         state.doneLog = parsed.doneLog || [];
         state.lastGenDate = parsed.lastGenDate || null;
         state.categoryOrder = parsed.categoryOrder || state.categoryOrder;
+        state.notes = parsed.notes || [];
+        state.notesArchive = parsed.notesArchive || [];
       }
     } catch(e) { console.error('load failed', e); }
   }
@@ -659,7 +740,9 @@
         backlog: state.backlog,
         doneLog: state.doneLog,
         lastGenDate: state.lastGenDate,
-        categoryOrder: state.categoryOrder
+        categoryOrder: state.categoryOrder,
+        notes: state.notes,
+        notesArchive: state.notesArchive
       }));
     } catch(e) { console.error('save failed', e); }
   }
@@ -995,7 +1078,8 @@
   function exportData(){
     var blob = new Blob([JSON.stringify({
       backlog: state.backlog, doneLog: state.doneLog,
-      lastGenDate: state.lastGenDate, categoryOrder: state.categoryOrder
+      lastGenDate: state.lastGenDate, categoryOrder: state.categoryOrder,
+      notes: state.notes, notesArchive: state.notesArchive
     }, null, 2)], { type: 'application/json' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
@@ -1016,6 +1100,8 @@
         state.doneLog = parsed.doneLog || [];
         state.lastGenDate = parsed.lastGenDate || null;
         state.categoryOrder = parsed.categoryOrder || state.categoryOrder;
+        state.notes = parsed.notes || [];
+        state.notesArchive = parsed.notesArchive || [];
         save();
         render();
       } catch(err) {
@@ -1023,6 +1109,57 @@
       }
     };
     reader.readAsText(file);
+  }
+
+  // ---- notes actions ----
+  function addNote(text){
+    if (!text || !text.trim()) return;
+    state.notes.push({ id: uid(), text: text.trim(), note: '', asked: false });
+    save();
+    render();
+    var input = document.querySelector('input[data-noteinput]');
+    if (input) input.focus();
+  }
+
+  function toggleAsked(id){
+    var n = state.notes.find(function(x){ return x.id === id; });
+    if (!n) return;
+    n.asked = !n.asked;
+    save();
+    render();
+  }
+
+  function deleteNote(id){
+    state.notes = state.notes.filter(function(n){ return n.id !== id; });
+    save();
+    render();
+  }
+
+  function editNoteText(id, newText){
+    var n = state.notes.find(function(x){ return x.id === id; });
+    if (!n) return;
+    var trimmed = newText.trim();
+    if (!trimmed) { render(); return; }
+    n.text = trimmed;
+    save();
+    render();
+  }
+
+  function editNoteDetail(id, newDetail){
+    var n = state.notes.find(function(x){ return x.id === id; });
+    if (!n) return;
+    n.note = newDetail.trim();
+    save();
+    render();
+  }
+
+  function endMeeting(){
+    if (state.notes.length === 0) return;
+    if (!confirm('Archive these ' + state.notes.length + ' question(s) and start fresh for the next meeting?')) return;
+    state.notesArchive.push({ date: todayStr(), questions: state.notes });
+    state.notes = [];
+    save();
+    render();
   }
 
   // ---- rendering ----
@@ -1037,6 +1174,7 @@
       '<div class="views">' +
         '<button class="viewbtn' + (state.view==='daily' ? ' active' : '') + '" data-view="daily">Today</button>' +
         '<button class="viewbtn' + (state.view==='planning' ? ' active' : '') + '" data-view="planning">Planning</button>' +
+        '<button class="viewbtn' + (state.view==='notes' ? ' active' : '') + '" data-view="notes">Notes</button>' +
       '</div>' +
       '<div style="display:flex; align-items:center; gap:4px;">' +
         (state.view === 'planning'
@@ -1049,6 +1187,7 @@
     app.appendChild(nav);
 
     if (state.view === 'daily') renderDaily(app);
+    else if (state.view === 'notes') renderNotes(app);
     else renderPlanning(app);
 
     nav.querySelectorAll('[data-view]').forEach(function(btn){
@@ -1111,6 +1250,11 @@
         list.appendChild(card);
       });
       app.appendChild(list);
+
+      var swap = document.createElement('div');
+      swap.className = 'swap-link';
+      swap.innerHTML = '<button id="goToPlanning">swap or add tasks</button>';
+      app.appendChild(swap);
     }
 
     app.querySelectorAll('button[data-act]').forEach(function(btn){
@@ -1432,6 +1576,149 @@
     });
     document.getElementById('importFile').addEventListener('change', function(e){
       if (e.target.files && e.target.files[0]) importData(e.target.files[0]);
+    });
+  }
+
+  function renderNotes(app){
+    var header = document.createElement('div');
+    header.className = 'notes-header';
+    header.innerHTML =
+      '<div class="daily-date">questions for next meeting</div>' +
+      (state.notes.length > 0 ? '<button class="menubtn" id="endMeetingBtn">end meeting &amp; archive</button>' : '');
+    app.appendChild(header);
+
+    var list = document.createElement('div');
+    list.className = 'notes-list';
+
+    if (state.notes.length === 0) {
+      var empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.innerHTML = '<div class="big">No questions yet.</div><div>Add one below as it comes to mind.</div>';
+      app.appendChild(empty);
+    } else {
+      state.notes.forEach(function(n){
+        var row = document.createElement('div');
+        row.className = 'note-item' + (n.asked ? ' asked' : '');
+        row.innerHTML =
+          '<button class="note-check" data-noteask="' + n.id + '" aria-label="Mark asked">' + (n.asked ? '&#10003;' : '') + '</button>' +
+          '<div class="note-body">' +
+            '<div class="txt note-q" data-noteedit="' + n.id + '">' + escapeHtml(n.text) + '</div>' +
+            (n.note
+              ? '<div class="note-detail" data-notedetailedit="' + n.id + '">' + escapeHtml(n.note) + '</div>'
+              : '<div class="note-detail-add" data-notedetailedit="' + n.id + '">add a note</div>') +
+          '</div>' +
+          '<button class="delbtn" data-notedel="' + n.id + '" aria-label="Delete">&#10005;</button>';
+        list.appendChild(row);
+      });
+      app.appendChild(list);
+    }
+
+    var newRow = document.createElement('div');
+    newRow.className = 'new-item-row note-new-row';
+    newRow.innerHTML =
+      '<span class="bullet">&#43;</span>' +
+      '<input type="text" placeholder="add a question" data-noteinput />';
+    app.appendChild(newRow);
+
+    if (state.notesArchive.length > 0) {
+      var archiveLink = document.createElement('div');
+      archiveLink.className = 'hidden-log-link';
+      archiveLink.innerHTML = '<button id="archiveBtn">past meetings</button>';
+      app.appendChild(archiveLink);
+    }
+
+    // ---- wiring ----
+    app.querySelectorAll('[data-noteask]').forEach(function(btn){
+      btn.addEventListener('click', function(){ toggleAsked(btn.getAttribute('data-noteask')); });
+    });
+    app.querySelectorAll('[data-notedel]').forEach(function(btn){
+      btn.addEventListener('click', function(){ deleteNote(btn.getAttribute('data-notedel')); });
+    });
+    var endBtn = document.getElementById('endMeetingBtn');
+    if (endBtn) endBtn.addEventListener('click', endMeeting);
+    var archBtn = document.getElementById('archiveBtn');
+    if (archBtn) archBtn.addEventListener('click', openNotesArchiveModal);
+
+    app.querySelectorAll('[data-noteedit]').forEach(function(span){
+      span.addEventListener('click', function(){
+        var id = span.getAttribute('data-noteedit');
+        var currentText = span.textContent;
+        var inputEl = document.createElement('input');
+        inputEl.type = 'text';
+        inputEl.value = currentText;
+        inputEl.className = 'edit-input';
+        span.replaceWith(inputEl);
+        inputEl.focus();
+        inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length);
+        var finish = function(){ editNoteText(id, inputEl.value); };
+        inputEl.addEventListener('keydown', function(e){
+          if (e.key === 'Enter') { e.preventDefault(); finish(); }
+          if (e.key === 'Escape') { render(); }
+        });
+        inputEl.addEventListener('blur', finish);
+      });
+    });
+
+    app.querySelectorAll('[data-notedetailedit]').forEach(function(div){
+      div.addEventListener('click', function(){
+        var id = div.getAttribute('data-notedetailedit');
+        var n = state.notes.find(function(x){ return x.id === id; });
+        var currentText = (n && n.note) ? n.note : '';
+        var inputEl = document.createElement('input');
+        inputEl.type = 'text';
+        inputEl.value = currentText;
+        inputEl.className = 'edit-input note-detail-input';
+        inputEl.placeholder = 'add a note';
+        div.replaceWith(inputEl);
+        inputEl.focus();
+        inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length);
+        var finish = function(){ editNoteDetail(id, inputEl.value); };
+        inputEl.addEventListener('keydown', function(e){
+          if (e.key === 'Enter') { e.preventDefault(); finish(); }
+          if (e.key === 'Escape') { render(); }
+        });
+        inputEl.addEventListener('blur', finish);
+      });
+    });
+
+    var noteInput = app.querySelector('input[data-noteinput]');
+    if (noteInput) {
+      noteInput.addEventListener('focus', function(){ newRow.classList.add('has-focus'); });
+      noteInput.addEventListener('blur', function(){ newRow.classList.remove('has-focus'); });
+      noteInput.addEventListener('keydown', function(e){
+        if (e.key === 'Enter') {
+          var text = noteInput.value;
+          if (text && text.trim()) addNote(text);
+        }
+      });
+    }
+  }
+
+  function openNotesArchiveModal(){
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    var modal = document.createElement('div');
+    modal.className = 'modal';
+    var sorted = state.notesArchive.slice().sort(function(a,b){ return b.date.localeCompare(a.date); });
+    modal.innerHTML = '<h3>Past meetings</h3>' +
+      (sorted.length === 0
+        ? '<div style="color:var(--text-tertiary); font-size:13px;">Nothing archived yet.</div>'
+        : sorted.map(function(m){
+            return '<div class="archive-meeting">' +
+              '<div class="archive-date">' + m.date + '</div>' +
+              m.questions.map(function(q){
+                return '<div class="log-item"><span' + (q.asked ? ' style="text-decoration:line-through; color:var(--text-tertiary);"' : '') + '>' + escapeHtml(q.text) + (q.note ? ' <span style="color:var(--text-tertiary);">&middot; ' + escapeHtml(q.note) + '</span>' : '') + '</span></div>';
+              }).join('') +
+            '</div>';
+          }).join('')) +
+      '<button class="modal-close" id="closeArchive">close</button>';
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    document.getElementById('closeArchive').addEventListener('click', function(){
+      document.body.removeChild(overlay);
+    });
+    overlay.addEventListener('click', function(e){
+      if (e.target === overlay) document.body.removeChild(overlay);
     });
   }
 
