@@ -570,10 +570,12 @@
 <script>
 (function(){
   var GOOGLE_CLIENT_ID = '817431423714-60o9rursb72aouopf6glk843muno23ae.apps.googleusercontent.com';
-  var CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
+  var CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar';
+  var THESIS_CALENDAR_NAME = 'Thesis tasks';
   var tokenClient = null;
   var accessToken = null;
   var tokenExpiresAt = 0;
+  var thesisCalendarId = null;
 
   var STORAGE_KEY = 'thesis-tasks-v1';
   var CATEGORIES = [
@@ -672,8 +674,15 @@
   function autoSuggest(n){
     n = n || 3;
     var pool = state.backlog.filter(function(b){ return !b.inToday && !b.isParent; });
-    // prioritize tasks that have been sitting longest
+    // prioritize tasks with an earlier deadline; tasks without a deadline sort after,
+    // ordered by how long they've been sitting in the backlog
     pool.sort(function(a,b){
+      if (a.deadline && b.deadline) {
+        if (a.deadline !== b.deadline) return a.deadline < b.deadline ? -1 : 1;
+        return daysSince(b.createdDate) - daysSince(a.createdDate);
+      }
+      if (a.deadline && !b.deadline) return -1;
+      if (!a.deadline && b.deadline) return 1;
       return daysSince(b.createdDate) - daysSince(a.createdDate);
     });
     var picked = [];
@@ -757,37 +766,82 @@
     tokenClient.requestAccessToken({ prompt: '' });
   }
 
-  function addEventToCalendar(task){
-    if (!task.deadline) return;
-    ensureToken(function(){
-      var event = {
-        summary: task.text,
-        description: 'Added from thesis-tasks',
-        start: { date: task.deadline },
-        end: { date: task.deadline }
-      };
-      fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+  function getOrCreateThesisCalendar(callback){
+    var cached = localStorage.getItem('thesis-tasks-calendar-id');
+    if (cached) { thesisCalendarId = cached; callback(thesisCalendarId); return; }
+
+    fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
+      headers: { 'Authorization': 'Bearer ' + accessToken }
+    })
+    .then(function(res){ return res.json(); })
+    .then(function(data){
+      var existing = (data.items || []).find(function(c){ return c.summary === THESIS_CALENDAR_NAME; });
+      if (existing) {
+        thesisCalendarId = existing.id;
+        localStorage.setItem('thesis-tasks-calendar-id', thesisCalendarId);
+        callback(thesisCalendarId);
+        return;
+      }
+      // not found, create it
+      fetch('https://www.googleapis.com/calendar/v3/calendars', {
         method: 'POST',
         headers: {
           'Authorization': 'Bearer ' + accessToken,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(event)
+        body: JSON.stringify({ summary: THESIS_CALENDAR_NAME })
       })
       .then(function(res){ return res.json(); })
-      .then(function(data){
-        if (data.id) {
-          task.calendarEventId = data.id;
-          save();
-          render();
+      .then(function(created){
+        if (created.id) {
+          thesisCalendarId = created.id;
+          localStorage.setItem('thesis-tasks-calendar-id', thesisCalendarId);
+          callback(thesisCalendarId);
         } else {
-          console.error('Calendar insert failed', data);
-          alert('Could not add to calendar. Try signing in again.');
+          console.error('Could not create thesis calendar', created);
+          alert('Could not create a separate calendar. Try signing in again.');
         }
-      })
-      .catch(function(err){
-        console.error('Calendar request failed', err);
-        alert('Could not reach Google Calendar.');
+      });
+    })
+    .catch(function(err){
+      console.error('Calendar list fetch failed', err);
+      alert('Could not reach Google Calendar.');
+    });
+  }
+
+  function addEventToCalendar(task){
+    if (!task.deadline) return;
+    ensureToken(function(){
+      getOrCreateThesisCalendar(function(calId){
+        var event = {
+          summary: task.text,
+          description: 'Added from thesis-tasks',
+          start: { date: task.deadline },
+          end: { date: task.deadline }
+        };
+        fetch('https://www.googleapis.com/calendar/v3/calendars/' + encodeURIComponent(calId) + '/events', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + accessToken,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(event)
+        })
+        .then(function(res){ return res.json(); })
+        .then(function(data){
+          if (data.id) {
+            task.calendarEventId = data.id;
+            save();
+            render();
+          } else {
+            console.error('Calendar insert failed', data);
+            alert('Could not add to calendar. Try signing in again.');
+          }
+        })
+        .catch(function(err){
+          console.error('Calendar request failed', err);
+          alert('Could not reach Google Calendar.');
+        });
       });
     });
   }
@@ -795,16 +849,18 @@
   function removeEventFromCalendar(task){
     if (!task.calendarEventId) return;
     ensureToken(function(){
-      fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events/' + task.calendarEventId, {
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer ' + accessToken }
-      })
-      .then(function(){
-        task.calendarEventId = null;
-        save();
-        render();
-      })
-      .catch(function(err){ console.error('Calendar delete failed', err); });
+      getOrCreateThesisCalendar(function(calId){
+        fetch('https://www.googleapis.com/calendar/v3/calendars/' + encodeURIComponent(calId) + '/events/' + task.calendarEventId, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + accessToken }
+        })
+        .then(function(){
+          task.calendarEventId = null;
+          save();
+          render();
+        })
+        .catch(function(err){ console.error('Calendar delete failed', err); });
+      });
     });
   }
 
